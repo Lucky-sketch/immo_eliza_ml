@@ -23,24 +23,24 @@ def predict(input_dataset, output_dataset):
     artifacts = joblib.load("models/artifacts.joblib")
 
     # Unpack the artifacts
-    num_features = artifacts["features"]["num_features"]
-    fl_features = artifacts["features"]["fl_features"]
-    cat_features = artifacts["features"]["cat_features"]
+    numerical_features = artifacts["features"]["numerical_features"]
+    categorical_features = artifacts["features"]["categorical_features"]
     imputer = artifacts["imputer"]
     enc = artifacts["enc"]
     model = artifacts["model"]
+    scaler = artifacts["scaler"]
 
-    # Extract the used data
-    data = data[num_features + fl_features + cat_features]
+
 
     # Apply imputer and encoder on data
-    data[num_features] = imputer.transform(data[num_features])
-    data_cat = enc.transform(data[cat_features]).toarray()
+    data[numerical_features]  = imputer.transform(data[numerical_features])
+    data_cat = enc.transform(data[categorical_features]).toarray()
+    data_scaled = pd.DataFrame(scaler.transform(data[numerical_features]), columns = scaler.get_feature_names_out())
 
     # Combine the numerical and one-hot encoded categorical columns
     data = pd.concat(
         [
-            data[num_features + fl_features].reset_index(drop=True),
+            pd.DataFrame(data_scaled.reset_index(drop=True)),
             pd.DataFrame(data_cat, columns=enc.get_feature_names_out()),
         ],
         axis=1,
