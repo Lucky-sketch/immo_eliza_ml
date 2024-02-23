@@ -15,66 +15,67 @@ def train():
     data = pd.read_csv("data/properties.csv")
     # IQR Outlier deletion
 
-    for column in [
-        # "Price",
-        "primary_energy_consumption_sqm",
-        "nbr_bedrooms",
+    # for column in [
+    #     # "Price",
+    #     "primary_energy_consumption_sqm",
+    #     "nbr_bedrooms",
+    #     "total_area_sqm",
+    #     "nbr_frontages",
+    # ]:
+    #     previous_count = data.shape[0]
+
+    #     # IQR
+    #     # Calculate the upper and lower limits
+    #     Q1 = data[column].quantile(0.1)
+    #     Q3 = data[column].quantile(0.75)
+    #     IQR = Q3 - Q1
+    #     upper = Q3 + 1.5 * IQR
+
+    #     # Create arrays of Boolean values indicating the outlier rows
+    #     upper_array = np.where(data[column] >= upper)[0]
+
+    #     # Removing the outliers
+    #     numerical_data_IQR = data.drop(index=data.index[upper_array])
+
+    #     print(
+    #         f"\nRows removed from {column}:",
+    #         previous_count - numerical_data_IQR.shape[0],
+    #     )
+    #     print("upper outliers:", len(upper_array))
+
+    categorical_features = [
+        "property_type",
+        "subproperty_type",
+        "locality",
+        "equipped_kitchen",
+        "state_building",
+        "heating_type",
+        "epc",
+    ]
+    numerical_features = [
+        'latitude',
+        'longitude',
+        "construction_year",
         "total_area_sqm",
+        "surface_land_sqm",
         "nbr_frontages",
-    ]:
-        previous_count = data.shape[0]
+        "fl_furnished",
+        "nbr_bedrooms",
+        "fl_open_fire",
+        "fl_terrace",
+        "terrace_sqm",
+        "primary_energy_consumption_sqm",
+        "fl_floodzone",
+        "fl_double_glazing",
+        "cadastral_income",
+    ]
+    # Define features to use
+    X = data
+    y = data["price"]
 
-        # IQR
-        # Calculate the upper and lower limits
-        Q1 = data[column].quantile(0.1)
-        Q3 = data[column].quantile(0.75)
-        IQR = Q3 - Q1
-        upper = Q3 + 1.5 * IQR
-
-        # Create arrays of Boolean values indicating the outlier rows
-        upper_array = np.where(data[column] >= upper)[0]
-
-        # Removing the outliers
-        numerical_data_IQR = data.drop(index=data.index[upper_array])
-
-        print(
-            f"\nRows removed from {column}:",
-            previous_count - numerical_data_IQR.shape[0],
-        )
-        print("upper outliers:", len(upper_array))
-
-        categorical_features = [
-            "property_type",
-            "subproperty_type",
-            "locality",
-            "equipped_kitchen",
-            "state_building",
-            "heating_type",
-            "epc",
-        ]
-        numerical_features = [
-            'latitude',
-            'longitude',
-            "construction_year",
-            "total_area_sqm",
-            "surface_land_sqm",
-            "nbr_frontages",
-            "fl_furnished",
-            "nbr_bedrooms",
-            "fl_open_fire",
-            "fl_terrace",
-            "terrace_sqm",
-            "primary_energy_consumption_sqm",
-            "fl_floodzone",
-            "fl_double_glazing",
-            "cadastral_income",
-        ]
-        X = data
-        y = data["price"]
-
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.20, random_state=505
-        )
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.20, random_state=505
+    )
     #catefory in nums
     enc = OneHotEncoder()
     enc.fit(
@@ -107,7 +108,7 @@ def train():
     print(f"Features: \n {X_train.columns.tolist()}")
 
     # Define the boost model
-    model3 = xgb.XGBRegressor(
+    model = xgb.XGBRegressor(
         reg_lambda=3,  # Adjust regularization parameters
         reg_alpha=0.5,
         objective='reg:squarederror',
@@ -122,56 +123,13 @@ def train():
 
 
     # Train the boost model
-    model3.fit(X_train, y_train)
+    model.fit(X_train, y_train)
 
-    # train_score = r2_score(y_train, model3.predict(X_train))
-    # test_score = r2_score(y_test, model3.predict(X_test))
-    # print(f"Boost: Train R² score: {train_score}")
-    # print(f"Boost: Test R² score: {test_score}")
+    train_score = r2_score(y_train, model.predict(X_train))
+    test_score = r2_score(y_test, model.predict(X_test))
+    print(f"Boost: Train R² score: {train_score}")
+    print(f"Boost: Test R² score: {test_score}")
 
-    # Impute missing values using SimpleImputer
-    imputer = SimpleImputer(
-        strategy="mean"
-    )  
-
-    # Fit the imputer to the data
-    imputer.fit(X_train[numerical_features])
-
-    # Transform the data by replacing NaN values with the imputed values
-    X_train[numerical_features] = imputer.transform(X_train[numerical_features])
-    X_test[numerical_features] = imputer.transform(X_test[numerical_features])
-
-    #scale the data
-    scaler = MinMaxScaler()
-    scaler.fit(X_train[numerical_features])
-    scaled_train = scaler.transform(X_train[numerical_features])
-    scaled_test = scaler.transform(X_test[numerical_features])
-    scaled_train_df = pd.DataFrame(scaled_train, columns=scaler.get_feature_names_out())
-    scaled_test_df = pd.DataFrame(scaled_test, columns=scaler.get_feature_names_out())
-
-    X_train = pd.concat(
-        [
-            scaled_train_df.reset_index(drop=True),
-            pd.DataFrame(X_train_features_df),
-        ],
-        axis=1,
-    )
-    X_test = pd.concat(
-        [
-            scaled_test_df.reset_index(drop=True),
-            pd.DataFrame(X_test_features_df),
-        ],
-        axis=1,
-    )
-
-    # Train the model for LinearRegression
-    model2 = LinearRegression()
-    model2.fit(X_train, y_train)
-
-    # train_score_line = r2_score(y_train, model2.predict(X_train))
-    # test_score_line = r2_score(y_test, model2.predict(X_test))
-    # print(f"Line: Train R² score: {train_score_line}")
-    # print(f"Line: Test R² score: {test_score_line}")
 
     # Save the model
     artifacts = {
@@ -179,11 +137,8 @@ def train():
             "numerical_features": numerical_features,
             "categorical_features": categorical_features,
         },
-        "imputer": imputer,
-        "enc": enc,
-        "scaler": scaler,
-        "model2": model2,
-        "model3": model3,
+        "model": model,
+        'enc': enc,
     }
     joblib.dump(artifacts, "models/artifacts.joblib", compress=3)
 

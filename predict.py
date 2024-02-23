@@ -17,7 +17,7 @@ def predict(input_dataset, input_model, output_dataset):
     """Predicts house prices from 'input_dataset', stores it to 'output_dataset'."""
     ### -------- DO NOT TOUCH THE FOLLOWING LINES -------- ###
     # Load the data
-    data = pd.read_csv(input_dataset)
+    data2 = pd.read_csv(input_dataset)
     ### -------------------------------------------------- ###
 
     # Load the model artifacts using joblib
@@ -26,47 +26,26 @@ def predict(input_dataset, input_model, output_dataset):
     # Unpack the artifacts
     numerical_features = artifacts["features"]["numerical_features"]
     categorical_features = artifacts["features"]["categorical_features"]
-    imputer = artifacts["imputer"]
     enc = artifacts["enc"]
-    model = artifacts["model2"]
-    model2 = artifacts["model3"]
-    scaler = artifacts["scaler"]
-
-
+    model = artifacts["model"]
 
     # Apply imputer and encoder on data
-    data_cat = enc.transform(data[categorical_features]).toarray()
+    data_cat = enc.transform(data2[categorical_features]).toarray()
     data = pd.concat(
         [
-            data[numerical_features].reset_index(drop=True),
+            data2[numerical_features].reset_index(drop=True),
             pd.DataFrame(data_cat, columns=enc.get_feature_names_out()),
         ],
         axis=1,
     )
     # Make predictions
-    if "line" in input_model:
-        predictions = model.predict(data)
-    else:
-        predictions = model2.predict(data)
+    predictions = model.predict(data)
+    # from sklearn.metrics import mean_absolute_error, r2_score
+    # mae = mean_absolute_error(data2["price"], predictions)
+    # score = r2_score(data2["price"], predictions)
+    # print(score)
 
-    data[numerical_features]  = imputer.transform(data[numerical_features])
-    data_scaled = pd.DataFrame(scaler.transform(data[numerical_features]), columns = scaler.get_feature_names_out())
-
-    # Combine the numerical and one-hot encoded categorical columns
-    data = pd.concat(
-        [
-            pd.DataFrame(data_scaled.reset_index(drop=True)),
-            pd.DataFrame(data_cat, columns=enc.get_feature_names_out()),
-        ],
-        axis=1,
-    )
-
-    # Make predictions
-    if "line" in input_model:
-        predictions = model.predict(data)
-    else:
-        predictions = model2.predict(data)
-
+    # print(mae)
     ### -------- DO NOT TOUCH THE FOLLOWING LINES -------- ###
     # Save the predictions to a CSV file (in order of data input!)
     pd.DataFrame({"predictions": predictions}).to_csv(output_dataset, index=False)
