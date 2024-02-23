@@ -5,6 +5,7 @@ import pandas as pd
 
 @click.command()
 @click.option("-i", "--input-dataset", help="path to input .csv dataset", required=True)
+@click.option("-m", "--input-model", default = "boost", help="name of the model that you want to use")
 @click.option(
     "-o",
     "--output-dataset",
@@ -12,7 +13,7 @@ import pandas as pd
     help="full path where to store predictions",
     required=True,
 )
-def predict(input_dataset, output_dataset):
+def predict(input_dataset, input_model, output_dataset):
     """Predicts house prices from 'input_dataset', stores it to 'output_dataset'."""
     ### -------- DO NOT TOUCH THE FOLLOWING LINES -------- ###
     # Load the data
@@ -27,7 +28,8 @@ def predict(input_dataset, output_dataset):
     categorical_features = artifacts["features"]["categorical_features"]
     imputer = artifacts["imputer"]
     enc = artifacts["enc"]
-    model = artifacts["model"]
+    model = artifacts["model2"]
+    model2 = artifacts["model3"]
     scaler = artifacts["scaler"]
 
 
@@ -47,8 +49,10 @@ def predict(input_dataset, output_dataset):
     )
 
     # Make predictions
-    predictions = model.predict(data)
-    predictions = predictions[:10]  # just picking 10 to display sample output :-)
+    if "line" in input_model:
+        predictions = model.predict(data)
+    else:
+        predictions = model2.predict(data)
 
     ### -------- DO NOT TOUCH THE FOLLOWING LINES -------- ###
     # Save the predictions to a CSV file (in order of data input!)
