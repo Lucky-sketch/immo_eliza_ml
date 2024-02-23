@@ -35,8 +35,21 @@ def predict(input_dataset, input_model, output_dataset):
 
 
     # Apply imputer and encoder on data
-    data[numerical_features]  = imputer.transform(data[numerical_features])
     data_cat = enc.transform(data[categorical_features]).toarray()
+    data = pd.concat(
+        [
+            data[numerical_features].reset_index(drop=True),
+            pd.DataFrame(data_cat, columns=enc.get_feature_names_out()),
+        ],
+        axis=1,
+    )
+    # Make predictions
+    if "line" in input_model:
+        predictions = model.predict(data)
+    else:
+        predictions = model2.predict(data)
+
+    data[numerical_features]  = imputer.transform(data[numerical_features])
     data_scaled = pd.DataFrame(scaler.transform(data[numerical_features]), columns = scaler.get_feature_names_out())
 
     # Combine the numerical and one-hot encoded categorical columns

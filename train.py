@@ -53,6 +53,8 @@ def train():
             "epc",
         ]
         numerical_features = [
+            'latitude',
+            'longitude',
             "construction_year",
             "total_area_sqm",
             "surface_land_sqm",
@@ -67,26 +69,13 @@ def train():
             "fl_double_glazing",
             "cadastral_income",
         ]
-        # Define features to use
         X = data
         y = data["price"]
 
         X_train, X_test, y_train, y_test = train_test_split(
             X, y, test_size=0.20, random_state=505
         )
-
-    # Impute missing values using SimpleImputer
-    imputer = SimpleImputer(
-        strategy="mean"
-    )  # You can also use 'median', 'most_frequent', or 'constant'
-
-    # Fit the imputer to the data
-    imputer.fit(X_train[numerical_features])
-
-    # Transform the data by replacing NaN values with the imputed values
-    X_train[numerical_features] = imputer.transform(X_train[numerical_features])
-    X_test[numerical_features] = imputer.transform(X_test[numerical_features])
-
+    #catefory in nums
     enc = OneHotEncoder()
     enc.fit(
         X_train[categorical_features]
@@ -100,6 +89,59 @@ def train():
         X_test_features, columns=enc.get_feature_names_out()
     )
 
+    X_train = pd.concat(
+        [
+            X_train[numerical_features].reset_index(drop=True),
+            X_train_features_df,
+        ],
+        axis=1,
+    )
+    X_test = pd.concat(
+        [
+            X_test[numerical_features].reset_index(drop=True),
+            X_test_features_df,
+        ],
+        axis=1,
+    )
+        
+    print(f"Features: \n {X_train.columns.tolist()}")
+
+    # Define the boost model
+    model3 = xgb.XGBRegressor(
+        reg_lambda=3,  # Adjust regularization parameters
+        reg_alpha=0.5,
+        objective='reg:squarederror',
+        n_estimators=1000,
+        min_child_weight=25,  # Increase minimum child weight
+        max_depth=5,  # Decrease maximum depth
+        learning_rate=0.01,  # Decrease learning rate
+        gamma=0.1,
+        colsample_bytree=0.8,
+        booster='gbtree'
+    )
+
+
+    # Train the boost model
+    model3.fit(X_train, y_train)
+
+    # train_score = r2_score(y_train, model3.predict(X_train))
+    # test_score = r2_score(y_test, model3.predict(X_test))
+    # print(f"Boost: Train R² score: {train_score}")
+    # print(f"Boost: Test R² score: {test_score}")
+
+    # Impute missing values using SimpleImputer
+    imputer = SimpleImputer(
+        strategy="mean"
+    )  
+
+    # Fit the imputer to the data
+    imputer.fit(X_train[numerical_features])
+
+    # Transform the data by replacing NaN values with the imputed values
+    X_train[numerical_features] = imputer.transform(X_train[numerical_features])
+    X_test[numerical_features] = imputer.transform(X_test[numerical_features])
+
+    #scale the data
     scaler = MinMaxScaler()
     scaler.fit(X_train[numerical_features])
     scaled_train = scaler.transform(X_train[numerical_features])
@@ -122,28 +164,14 @@ def train():
         axis=1,
     )
 
-    print(f"Features: \n {X_train.columns.tolist()}")
-    # Define the model
-    model3 = xgb.XGBRegressor(reg_lambda=5, reg_alpha=1, objective='reg:squarederror', 
-                            n_estimators=500, min_child_weight=14, max_depth=12, 
-                            learning_rate=0.03, gamma=0.1, colsample_bytree=0.8, booster='gbtree')
-
-
-    # Train the model
-    model3.fit(X_train, y_train)
-    # Predict
-    train_score = r2_score(y_train, model3.predict(X_train))
-    test_score = r2_score(y_test, model3.predict(X_test))
-    print(f"Boost: Train R² score: {train_score}")
-    print(f"Boost: Test R² score: {test_score}")
     # Train the model for LinearRegression
     model2 = LinearRegression()
     model2.fit(X_train, y_train)
 
-    train_score_line = r2_score(y_train, model2.predict(X_train))
-    test_score_line = r2_score(y_test, model2.predict(X_test))
-    print(f"Line: Train R² score: {train_score_line}")
-    print(f"Line: Test R² score: {test_score_line}")
+    # train_score_line = r2_score(y_train, model2.predict(X_train))
+    # test_score_line = r2_score(y_test, model2.predict(X_test))
+    # print(f"Line: Train R² score: {train_score_line}")
+    # print(f"Line: Test R² score: {test_score_line}")
 
     # Save the model
     artifacts = {
