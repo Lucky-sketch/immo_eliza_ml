@@ -36,7 +36,10 @@ With the XGBoost model, I achieved 75% accuracy on the train data and 73% on tes
 
 ### Limitations
 
-What are the limitations of your model?
+There are 2 major limitations while working with XGBoost:
+
+1)It is very prone to overfitting so it is imperative to adjust hyperparameters;
+2)Very sensitive to hyperparameters, which are also not that easy to adjust.
 
 ### Usage
 
