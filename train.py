@@ -80,7 +80,7 @@ def train():
     enc = OneHotEncoder()
     enc.fit(
         X_train[categorical_features]
-    )  # Note the double brackets to create a DataFrame with a single column
+    )  
     X_train_features = enc.transform(X_train[categorical_features]).toarray()
     X_train_features_df = pd.DataFrame(
         X_train_features, columns=enc.get_feature_names_out()
