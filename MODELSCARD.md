@@ -31,9 +31,15 @@ I have tested 3 models: linear regression, random forest, and XGBoost. Due to th
 
 With the XGBoost model, I achieved 75% accuracy on the train data and 73% on test data. In the visualization below, blue dots represent actual prices and red ones represent predicted.
 
+![predictions](https://github.com/Lucky-sketch/immo_eliza_ml/assets/53155116/aceaa0e4-114e-495b-ba4d-311d38a5460e)
+
+
 ### Limitations
 
-What are the limitations of your model?
+There are 2 major limitations while working with XGBoost:
+
+1)It is very prone to overfitting so it is imperative to adjust hyperparameters;
+2)Very sensitive to hyperparameters, which are also not that easy to adjust.
 
 ### Usage
 
