@@ -5,7 +5,7 @@ import pandas as pd
 
 @click.command()
 @click.option("-i", "--input-dataset", help="path to input .csv dataset", required=True)
-@click.option("-m", "--input-model", default = "boost", help="name of the model that you want to use")
+# @click.option("-m", "--input-model", default = "boost", help="name of the model that you want to use")
 @click.option(
     "-o",
     "--output-dataset",
@@ -13,7 +13,7 @@ import pandas as pd
     help="full path where to store predictions",
     required=True,
 )
-def predict(input_dataset, input_model, output_dataset):
+def predict(input_dataset, output_dataset):
     """Predicts house prices from 'input_dataset', stores it to 'output_dataset'."""
     ### -------- DO NOT TOUCH THE FOLLOWING LINES -------- ###
     # Load the data
@@ -21,7 +21,7 @@ def predict(input_dataset, input_model, output_dataset):
     ### -------------------------------------------------- ###
 
     # Load the model artifacts using joblib
-    artifacts = joblib.load("models/artifacts.joblib")
+    artifacts = joblib.load("immo_eliza_ml/models/artifacts.joblib")
 
     # Unpack the artifacts
     numerical_features = artifacts["features"]["numerical_features"]
@@ -40,12 +40,7 @@ def predict(input_dataset, input_model, output_dataset):
     )
     # Make predictions
     predictions = model.predict(data)
-    # from sklearn.metrics import mean_absolute_error, r2_score
-    # mae = mean_absolute_error(data2["price"], predictions)
-    # score = r2_score(data2["price"], predictions)
-    # print(score)
 
-    # print(mae)
     ### -------- DO NOT TOUCH THE FOLLOWING LINES -------- ###
     # Save the predictions to a CSV file (in order of data input!)
     pd.DataFrame({"predictions": predictions}).to_csv(output_dataset, index=False)
